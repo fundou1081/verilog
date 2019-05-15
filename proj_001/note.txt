@@ -1,0 +1,384 @@
+无论是能够综合成电路的verilog程序还是只是仿真的程序，都需要以模块的形式给出。
+①端口可以比方成芯片的输入输入管脚，它只有三种类型：输入，输出，双向；
+②端口有一些附加属性，如数据类型、符号特性、位宽等；input端口只能是线网类型，output可以是寄存器类型也可以是线网类型，inout也只能是线网类型。至于线网类型和寄存器类型，在以后的数据类型中会介绍。
+　③当端口是总线类型时，可以简单地理解为端口有多位时，对应于同时描述芯片的多个管脚时，可以给端口加上位宽。即input wire  [M:N]  a;如果M>N，则为降序,a[M]为最高位，位宽为M-N+1位；如果M<N，则最高位位a[N]位，位宽位N-M+1位；
+
+
+3.1.1	模块端口定义
+
+模块名 ( .端口1(信号1),.端口2(信号2))
+
+3.1.2	模块内容
+
+1、I/O
+	input，output，inout [位宽-1:0] 端口1;
+	
+2、内部信号
+	reg [width-1:0]
+	wire [width-1:0]
+	
+3、功能定义
+	assign 声明
+	实例元件
+	always块
+	
+3.2		数据类型
+
+	reg,wire,integer,parameter
+	
+	large, medium,scalared,time,small,tri,trio,tri1,triand,trior,trireg,vectored,wand,wor
+
+3.2.1	常量
+
+	数字
+	<位宽><进制><数字>	8'b10101100		8'ha2
+	<进制><数字>	位宽使用默认位宽，具体由系统确定，但至少32位
+	<数字>	默认使用10进制
+	
+	x不定值，z高阻值(可写作 ? )	12'd?
+	负数	-8'd5
+	下划线		16'b1010_1011_1111_1010
+
+	参数
+	parameter msb=7;
+	parameter delay(r+f)/2;
+	
+3.2.2	变量
+
+	网络数据类型	实体之间物理连接，不能存储值，必须受到驱动器驱动，未连接到驱动器，即为z值
+	
+	wire
+		assign
+	
+	reg		数据存储单元的抽象。默认初值不定值x
+		always 触发器，块内被赋值的每一个信号必须定义成 reg
+		可为正值或负值
+			但在表达式中表示时，始终为正值，4位 reg ，负值 -1 会被认为是+15
+			
+	memory
+		reg [n-1:0] 存储器名 [m-1:0];	reg[7:0] mema[255:0];
+		
+		
+		
+运算符 
+
+	位拼接运算符	{}
+
+	{a,b[3:0],w,3'b101}		不允许出现未指明位数的信号
+	{4{w}}
+	
+	缩减运算符
+		reg[3:0] B;
+		reg C;
+			C=&B;
+		C = ( (B[0] & B[1]) & B[2]) & B[3];
+	
+	
+赋值语句
+
+	非阻塞赋值		b<=a;
+	块结束，完成赋值
+	
+	阻塞赋值
+	赋值语句执行，块结束	b=a;
+	
+块语句
+
+	顺序块
+		begin
+			···
+			···
+		end
+		
+	并行块
+		fork
+			···
+			···
+		end
+		
+	块名	加在 begin  fork 后面
+		块内定义局部变量
+	
+	
+条件语句
+	必须在过程块语句内，由initial  always引导的执行语句，begin 内
+	
+case 语句
+	指令译码
+	case()
+		``:``;
+		``:``;
+		default:   ;
+	endcase
+	
+	位宽必须相等， 不指定时默认为 32位
+	casez casex 处理不必考虑的情况
+	
+	
+生成不想要的锁存器
+	always @ (al or d)
+		begin 
+			if(al) q=d;
+		end
+	若al=0，则q保持不变，生成锁存器
+	加入 else 没有
+	
+	
+	always @ (sel [1:0] or a or d)
+		case (sel [1:0]) 
+			2'b00:	q<=a;
+			2'b11:	q<=b;
+		end
+		
+	有锁存器，，加入 default 没有
+	
+	
+循环语句
+
+	forever
+	repeat
+	while
+	for
+	
+	forever		begin	end 不能独立写在程序中，写在initial块中。作为仿真测试信号
+	repeat		begin	end
+	while		begin	end
+	for			begin	end
+	
+	
+	
+顺序块 (过程块)		begin	end 
+
+	逐条执行，除非内嵌控制，非阻塞语句
+	包含延迟或事件控制，延迟相对于前语句执行完成的时间
+	
+并行块	fork	join
+
+	执行顺序由各自语句内延迟决定
+	延迟相对于块语句开始时刻
+	fork 分成多个独立的执行流，join 汇流
+	
+块语句
+
+	嵌套
+	命名块	声明局部变量，可通过层次名引用访问，可被禁止
+	块语句禁用导致块后面语句执行，可禁用设计中任意一个命名块
+	
+	begin:	block1
+		while(1)
+		begin
+			if(flagp[i])
+			begin	
+				$display ("ddddd  %d",i);
+				disable block1;
+			end
+			i=i+1;
+		end
+		end
+	end
+	
+	
+生成块
+	可动态生成 verilog 代码
+	generate	endgenerate
+	生成实例， 模块，用户定义原语，门级，连续赋值，initial always块
+	可声明数据类型
+		net，wire
+		integer,real,time,realtime
+		event
+	defparam 可重新定义参数必须是在同一个生成范围内
+	
+	不允许出现 
+		参数，局部参数
+		输入，输出
+		指定块
+		
+	循环生成，条件生成，case生成
+	
+	
+	
+	
+过程模块从属
+
+initial		语句
+always		语句
+task		语句
+function	语句
+	
+	
+可以有多个 inital 和 always 
+在仿真一开始同时立即执行
+initial 执行一次，always 重复执行直至仿真结束
+
+task function 在一处或多处调用
+
+
+
+initial		begin	end 
+不需要仿真时间
+
+
+always  <时序控制>  <语句>
+
+always areg = ~areg;	0延迟无线跳变，仿真锁死
+always #half_period		areg = ~areg;	常用时钟激励信号
+
+沿触发，描述时序行为，有限状态机
+电平触发，组合逻辑
+
+
+awlays 块or事件控制
+or 可用 , 代替
+@*  @(*) 表示对其后面语句块中所有输入变量变化是敏感的
+
+always 
+	wait(count_enbale)	#20	count = count +1;
+	
+
+自动递归函数
+	function automatic integer factoria;
+
+
+常用系统任务
+$display();
+$write();	
+handle1 = $fopen(" filename");	
+
+$fdisplay
+$fmonitor
+$fwrite
+$fstrobe
+
+$fclose(handle)	
+
+$strobe 在 语句执行完之后显示
+
+
+VCD
+$dumpvars
+$dumpfile
+$dumpon, $dumpoff
+$dumpall
+
+
+
+调试用系统任务，编译预处理
+
+$monitor($time,,"%b  %b",rxd,txd);
+,,代表空参数，显示空格
+
+
+$time 返回64位整数表示当前仿真时刻，以模块仿真时间尺度
+尺度 10ns， 16ns  32ns 为 1.6  3.2 
+输出整数，1.6  3.2 取整后为 2,3
+
+
+$realtime  返回实型数，以时间尺度为基准
+
+$finish
+退出仿真
+$finish(n)
+0 无信息
+1 当前时刻位置
+2 当前时刻，位置，memory，CPU时间统计
+
+
+
+$stop
+暂定
+$stop(n)
+
+$readmemb
+$readmemh
+
+	
+$random	%	b  
+b>0	(-b+1):(b-1)
+
+reg[23:0] rand;
+rand = $random % 60;
+
+
+
+编译预处理
+
+宏定义
+
+`define
+`define	singal string
+`definr WORDSIZE 8
+reg [1:`WORDSIZE] data;
+`define  type_nand #5
+
+
+`include
+
+
+`timescale	时间单位/时间精度
+
+
+`ifdef
+`else
+`endif
+
+$test $plusargs
+
+if($test $plusargs("DISPLAY_VAR"))
+当设置了标志 DISPLAY_VAR
+
+$valuse $plusargs
+
+
+
+
+Gatetype
+
+and
+nand
+nor
+or
+xor
+xnor
+buf
+not
+
+<门类型>[<驱动能力><延时>] <实例>
+
+nand #10 nd1(a,data,clock,clear)
+
+
+
+# time(触发的时刻)  -> 事件名
+
+
+用户定义的原语
+User Defined Primitives	UDP
+
+primitive 元件名 ()
+
+只有一个输出端，端口说明列表
+多个输入端，最多10个
+变量必须是标量，必须是1位
+真值表中只允许出现 0,1,X 值，高阻态Z不许出现
+只有输出端被定义为寄存器类型
+initial 给时序内部寄存器赋初值，只允许0,1,X,默认为 X
+
+
+Mealy状态机输出取决于状态还取决于输入
+Moore状态机输出至取决于当前状态
+
+
+组合逻辑 always   阻塞赋值	=
+时序逻辑 always 非阻塞赋值	<=
+
+
+时序电路	非阻塞语句
+锁存器电路	非阻塞语句
+always组合逻辑	阻塞赋值
+时序和组合		非阻塞语句
+不要既用非阻塞又用阻塞
+不在一个以上always中对同一个变量赋值
+用$strobe 显示非阻塞
+赋值时不使用 #0 延迟 
+
+
